@@ -111,12 +111,21 @@ if (( ${checking} == 1 )); then
                 src_mod_times=$(stat -c%Y "$file")
                 dst_mod_times=$(stat -c%Y "$dst_file")
 
+                # compare modification dates
                 if ((dst_mod_times > src_mod_times)); then
-                    echo "Warning: $dst_file is more recent than $file"
                     warnings=$((warnings + 1))
                 fi
             fi
         done
 
+
+        # checks if there are files in backup that are not in SRC
+        for file in "${files_in_dst[@]}"; do
+            src_file="${SRC}/$(basename "$file")"
+
+            if ! [[ -f "${src_file}"]]; then
+                deleted=$((deleted + 1))
+            fi 
+        done
     fi
 fi
