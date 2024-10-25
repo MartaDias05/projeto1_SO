@@ -98,5 +98,10 @@ if (( ${checking} == 1 )); then
 
         #compare both directories and find anomalies
 
+        # creates arrays that store the files of each directory (only files, not directories)
+        files_in_src = ($(find "${SRC}" -type f))
+        files_in_dst = ($(find "${DST}" -type f))
+
+        
     fi
 fi
