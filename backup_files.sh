@@ -113,7 +113,8 @@ if (( ${checking} == 1 )); then
 
                 # compare modification dates
                 if ((dst_mod_times > src_mod_times)); then
-                    warnings=$((warnings + 1))
+                    warnings=((warnings + 1))
+                    echo "$warnings Warnings;"
                 fi
             fi
         done
@@ -124,8 +125,14 @@ if (( ${checking} == 1 )); then
             src_file="${SRC}/$(basename "$file")"
 
             if ! [[ -f "${src_file}"]]; then
-                deleted=$((deleted + 1))
+                deleted=((deleted + 1))
+                echo "$deleted Deleted;"
             fi 
         done
     fi
 fi
+
+
+# if c was not passed in as a flag, do the actual backup
+if(( {checking} == 0)); then
+    
