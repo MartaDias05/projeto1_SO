@@ -9,6 +9,7 @@ updated=0
 copied=0
 size_copied=0
 deleted=0
+size_deleted=0
 
 declare -a files_in_src # files_in_src will hold all of the files present in src directory
 declare -a files_in_bck # holds all of the files present in backup directory
@@ -113,8 +114,7 @@ if (( ${checking} == 1 )); then
 
                 # compare modification dates
                 if [["$dst_mod_times" -gt "$src_mod_times"]]; then
-                    warnings=((warnings + 1))
-                    echo "$warnings Warnings;"
+                    warnings=(($warnings + 1))
                 fi
             fi
         done
@@ -125,12 +125,14 @@ if (( ${checking} == 1 )); then
             src_file="${SRC}/$(basename "$file")"
 
             if ! [[ -f "${src_file}"]]; then
-                deleted=((deleted + 1))
-                echo "$deleted Deleted;"
+                deleted=(($deleted + 1))
+                size_deleted=$(($size_deleted + $(stat -c%s "$file")))
             fi 
         done
     fi
 fi
+
+echo "While backuping ${DST}: $errors Erros; $warnings Warnings; $updated Updated; $copied Copied ($size_copied); $deleted Deleted ($size_deleted)"
 
 
 # if c was not passed in as a flag, do the actual backup
@@ -173,9 +175,11 @@ if(( {checking} == 0)); then
             src_file="${SRC}/$(basename "$file")"
 
             if ! [[ -f "${src_file}"]]; then
-                deleted=((deleted + 1))
-                echo "$deleted Deleted;"
+                deleted=(($deleted + 1))
+                size_deleted=$(($size_deleted + $(stat -c%s "$file")))
             fi 
         done
     fi
 fi
+
+echo "While backuping ${DST}: $errors Erros; $warnings Warnings; $updated Updated; $copied Copied ($size_copied); $deleted Deleted ($size_deleted)"
