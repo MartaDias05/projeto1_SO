@@ -99,9 +99,24 @@ if (( ${checking} == 1 )); then
         #compare both directories and find anomalies
 
         # creates arrays that store the files of each directory (only files, not directories)
-        files_in_src = ($(find "${SRC}" -type f))
-        files_in_dst = ($(find "${DST}" -type f))
+        files_in_src=($(find "${SRC}" -type f))
+        files_in_dst=($(find "${DST}" -type f))
 
-        
+
+        for file in "${files_in_src[@]}"; do
+            dst_file="${DST}/$(basename "$file")"
+
+            # verify if the files exists on DST
+            if [[ -f "${dst_file}"]]; then
+                src_mod_times=$(stat -c%Y "$file")
+                dst_mod_times=$(stat -c%Y "$dst_file")
+
+                if ((dst_mod_times > src_mod_times)); then
+                    echo "Warning: $dst_file is more recent than $file"
+                    warnings=$((warnings + 1))
+                fi
+            fi
+        done
+
     fi
 fi
