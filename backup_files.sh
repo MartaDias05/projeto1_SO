@@ -112,7 +112,7 @@ if (( ${checking} == 1 )); then
                 dst_mod_times=$(stat -c%Y "$dst_file")
 
                 # compare modification dates
-                if ((dst_mod_times > src_mod_times)); then
+                if [["$dst_mod_times" -gt "$src_mod_times"]]; then
                     warnings=((warnings + 1))
                     echo "$warnings Warnings;"
                 fi
@@ -120,7 +120,7 @@ if (( ${checking} == 1 )); then
         done
 
 
-        # checks if there are files in backup that are not in SRC
+        # checks if there are files in backup that are not in SRC and remove them
         for file in "${files_in_dst[@]}"; do
             src_file="${SRC}/$(basename "$file")"
 
@@ -136,3 +136,46 @@ fi
 # if c was not passed in as a flag, do the actual backup
 if(( {checking} == 0)); then
     
+    # actual backup
+    if ((${first_run} == 1)); then
+
+        # copy all the files in SRC to DST
+        find "${SRC}" -type f | while read file; do
+
+            pathname_original_file="${DST}/${file}"
+            pathname_copied_file="${DST}/$(basename "$file")"
+
+            echo "cp -a $file ${pathname_copied_file}"
+            copied=$(($copied + 1))
+            size_copied=$(($size_copied + $(stat -c%s "$file")))
+        done
+
+    else
+
+        # copy new files or changed files
+        files_in_src=($(find "${SRC}" -type f))
+
+        for file in "${files_in_scr[@]}"; do
+            dst_file=($(find "${DST}" -type f))
+
+            src_mod_times=$(stat -c%Y "$file")
+            dst_mod_times=$(stat -c%Y "$dst_file")
+
+            if [[ ! -f "$dst_file" || "$src_mod_times" -gt "$dst_mod_times"]]; do
+                cp -a "$file" "$dst_file"
+                copied=$(($copied + 1))
+                size_copied=$(($size_copied + $(stat -c%s "file")))
+            fi
+        done
+
+        # checks if there are files in backup that are not in SRC and remove them
+        for file in "${files_in_dst[@]}"; do
+            src_file="${SRC}/$(basename "$file")"
+
+            if ! [[ -f "${src_file}"]]; then
+                deleted=((deleted + 1))
+                echo "$deleted Deleted;"
+            fi 
+        done
+    fi
+fi
