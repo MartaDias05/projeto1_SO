@@ -80,10 +80,9 @@ fi
 
 #if c was passed in as a flag then simulate the backup
 if (( ${checking} == 1 )); then
-
     #simulate the backup
     if ((${first_run} == 1)); then
-
+        echo "here"
         find "${SRC}" -type f | while read file; do
     
             pathname_original_file="${SRC}/${file}"
@@ -91,10 +90,11 @@ if (( ${checking} == 1 )); then
 
             echo "cp -a $file ${pathname_copied_file}"
             copied=$(($copied + 1))
+            echo $copied
             size_copied=$(($size_copied + $(stat -c%s "$file")))
 
         done 
-
+        echo $copied
     else
 
         #compare both directories and find anomalies
@@ -108,13 +108,13 @@ if (( ${checking} == 1 )); then
             dst_file="${DST}/$(basename "$file")"
 
             # verify if the files exists on DST
-            if [[ -f "${dst_file}"]]; then
+            if [[ -f "${dst_file}" ]]; then
                 src_mod_times=$(stat -c%Y "$file")
                 dst_mod_times=$(stat -c%Y "$dst_file")
 
                 # compare modification dates
                 if [["$dst_mod_times" -gt "$src_mod_times"]]; then
-                    warnings=(($warnings + 1))
+                    warnings=$(($warnings + 1))
                 fi
             fi
         done
@@ -124,8 +124,8 @@ if (( ${checking} == 1 )); then
         for file in "${files_in_dst[@]}"; do
             src_file="${SRC}/$(basename "$file")"
 
-            if ! [[ -f "${src_file}"]]; then
-                deleted=(($deleted + 1))
+            if ! [[ -f "${src_file}" ]]; then
+                deleted=$(($deleted + 1))
                 size_deleted=$(($size_deleted + $(stat -c%s "$file")))
             fi 
         done
@@ -136,7 +136,7 @@ echo "While backuping ${DST}: $errors Erros; $warnings Warnings; $updated Update
 
 
 # if c was not passed in as a flag, do the actual backup
-if(( {checking} == 0)); then
+if(( ${checking} == 0)); then
     
     # actual backup
     if ((${first_run} == 1)); then
@@ -163,7 +163,7 @@ if(( {checking} == 0)); then
             src_mod_times=$(stat -c%Y "$file")
             dst_mod_times=$(stat -c%Y "$dst_file")
 
-            if [[ ! -f "$dst_file" || "$src_mod_times" -gt "$dst_mod_times"]]; do
+            if [[ ! -f "$dst_file" || "$src_mod_times" -gt "$dst_mod_times" ]]; then
                 cp -a "$file" "$dst_file"
                 copied=$(($copied + 1))
                 size_copied=$(($size_copied + $(stat -c%s "file")))
@@ -174,8 +174,8 @@ if(( {checking} == 0)); then
         for file in "${files_in_dst[@]}"; do
             src_file="${SRC}/$(basename "$file")"
 
-            if ! [[ -f "${src_file}"]]; then
-                deleted=(($deleted + 1))
+            if ! [[ -f "${src_file}" ]]; then
+                deleted=$(($deleted + 1))
                 size_deleted=$(($size_deleted + $(stat -c%s "$file")))
             fi 
         done
@@ -183,3 +183,4 @@ if(( {checking} == 0)); then
 fi
 
 echo "While backuping ${DST}: $errors Erros; $warnings Warnings; $updated Updated; $copied Copied ($size_copied); $deleted Deleted ($size_deleted)"
+
