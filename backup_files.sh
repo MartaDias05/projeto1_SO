@@ -78,6 +78,16 @@ if ! [[ -d ${DST} ]]; then
 fi
 
 
+# function to calculate copied files and their size
+copy_file() {
+    local file=$1
+    local dest=$2
+    cp -a "$file" "$dest"
+    copied=$(($copied + 1))
+    size_copied=$(($size_copied + $(stat -c%s "$file")))
+}
+
+
 #if c was passed in as a flag then simulate the backup
 if (( ${checking} == 1 )); then
     #simulate the backup
