@@ -78,6 +78,7 @@ if ! [[ -d ${DST} ]]; then
 fi
 
 
+
 # function to calculate copied files and their size
 copy_file() {
     local file=$1
@@ -87,6 +88,7 @@ copy_file() {
     echo $copied
     size_copied=$(($size_copied + $(stat -c%s "$file")))
 }
+
 
 
 # funtcion to remove the files in the backup that are not in SRC
@@ -116,6 +118,8 @@ compare_modification_dates() {
     fi
 }
 
+
+
 #if c was passed in as a flag then simulate the backup
 if (( ${checking} == 1 )); then
     #simulate the backup
@@ -126,11 +130,7 @@ if (( ${checking} == 1 )); then
             pathname_original_file="${SRC}/${file}"
             pathname_copied_file="${DST}/$(basename "${file}")"
 
-            echo "cp -a $file ${pathname_copied_file}"
-            copied=$(($copied + 1))
-            echo $copied
-            size_copied=$(($size_copied + $(stat -c%s "$file")))
-
+            copy_file "$file" "$pathname_copied_file"
         done 
         echo $copied
     else
@@ -147,26 +147,14 @@ if (( ${checking} == 1 )); then
 
             # verify if the files exists on DST
             if [[ -f "${dst_file}" ]]; then
-                src_mod_times=$(stat -c%Y "$file")
-                dst_mod_times=$(stat -c%Y "$dst_file")
 
-                # compare modification dates
-                if [["$dst_mod_times" -gt "$src_mod_times"]]; then
-                    warnings=$(($warnings + 1))
-                fi
+                compare_modification_dates "$file" "$dst_file"
             fi
         done
 
 
         # checks if there are files in backup that are not in SRC and remove them
-        for file in "${files_in_dst[@]}"; do
-            src_file="${SRC}/$(basename "$file")"
-
-            if ! [[ -f "${src_file}" ]]; then
-                deleted=$(($deleted + 1))
-                size_deleted=$(($size_deleted + $(stat -c%s "$file")))
-            fi 
-        done
+        remove_deleted_files
     fi
 fi
 
@@ -185,9 +173,7 @@ if(( ${checking} == 0)); then
             pathname_original_file="${DST}/${file}"
             pathname_copied_file="${DST}/$(basename "$file")"
 
-            echo "cp -a $file ${pathname_copied_file}"
-            copied=$(($copied + 1))
-            size_copied=$(($size_copied + $(stat -c%s "$file")))
+            copy_file "$file" "$pathname_copied_file"
         done
 
     else
@@ -202,21 +188,12 @@ if(( ${checking} == 0)); then
             dst_mod_times=$(stat -c%Y "$dst_file")
 
             if [[ ! -f "$dst_file" || "$src_mod_times" -gt "$dst_mod_times" ]]; then
-                cp -a "$file" "$dst_file"
-                copied=$(($copied + 1))
-                size_copied=$(($size_copied + $(stat -c%s "file")))
+                copy_file "$file" "$dst_file"
             fi
         done
 
         # checks if there are files in backup that are not in SRC and remove them
-        for file in "${files_in_dst[@]}"; do
-            src_file="${SRC}/$(basename "$file")"
-
-            if ! [[ -f "${src_file}" ]]; then
-                deleted=$(($deleted + 1))
-                size_deleted=$(($size_deleted + $(stat -c%s "$file")))
-            fi 
-        done
+        remove_deleted_files
     fi
 fi
 
