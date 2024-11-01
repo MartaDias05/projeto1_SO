@@ -84,6 +84,7 @@ copy_file() {
     local dest=$2
     cp -a "$file" "$dest"
     copied=$(($copied + 1))
+    echo $copied
     size_copied=$(($size_copied + $(stat -c%s "$file")))
 }
 
@@ -101,6 +102,19 @@ remove_deleted_files() {
 }
 
 
+
+# function to compare modification dates
+compare_modification_dates() {
+    local src_file=$1
+    local dst_file=$2
+
+    src_mod_times=$(stat -c%Y "$src_file")
+    dst_mod_times=$(stat -c%Y "$dst_file")
+
+    if [["$dst_mod_times" -gt "$src_mod_times"]]; then
+        warnings=$(($warnings + 1))
+    fi
+}
 
 #if c was passed in as a flag then simulate the backup
 if (( ${checking} == 1 )); then
