@@ -6,4 +6,4 @@ finalmente funcionou
 a mathildis é chata
 
 
-nao tive tempo de aplicar as funçoes, sorry, se tiver ainda tento fazer isso mais para o final da tarde
+problema: estive para ai 30 min e nao consigo perceber o erro do -r, eu quando uso -r ele copia todos os ficheiros, acho que o regex nao esta a funcionar
