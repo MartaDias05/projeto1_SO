@@ -1,11 +1,13 @@
 #!/bin/bash
 
+regex=''
+
 SRC=${@:OPTIND:1}
 DST=${@:OPTIND+1:1}
 
 
 # checks if -r and -b were passed as flags
-while getopts "r" opt; do
+while getopts "cr:" opt; do
 
     case ${opt} in
     
