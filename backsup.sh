@@ -53,6 +53,7 @@ for item in "$SRC"/*; do
         ./backsup.sh "$item" "$new_dst"
 
 
+    # if -r was passed as a flag
     elif [[ -f ${item} ]]; then
         if [[ -n ${regex} ]]; then
             if [[ "$(basename "$item")" =~ $regex ]]; then
