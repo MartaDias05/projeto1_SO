@@ -1,6 +1,14 @@
 #!/bin/bash
 
-# funtcion to remove the files in the backup that are not in SRC
+# this script holds a function responsible for removing any files in DST directory 
+# that are not present in the SRC directory
+
+# this function takes in as parameters:
+# SRC
+# DST
+# value of flag -c (0 or 1)
+
+
 remove_deleted_files() {
 
     local DST=$1
