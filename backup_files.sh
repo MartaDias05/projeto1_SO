@@ -1,9 +1,9 @@
 #!/bin/bash
 
-. ./utilities/remove_deleted_files.sh
-. ./utilities/compare_modification_dates.sh
-. ./utilities/cp_all_files.sh
-. ./utilities/cp_new_mod_files.sh
+. ./utilities_backup_files/remove_deleted_files.sh
+. ./utilities_backup_files/compare_modification_dates.sh
+. ./utilities_backup_files/cp_all_files.sh
+. ./utilities_backup_files/cp_new_mod_files.sh
 
 
 checking=0
