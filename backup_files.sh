@@ -1,6 +1,7 @@
 #!/bin/bash
 
 . ./utilities/remove_deleted_files.sh
+. ./utilities/compare_modification_dates.sh
 
 
 checking=0
@@ -82,44 +83,20 @@ fi
 
 
 
-
-# function to compare modification dates
-compare_modification_dates() {
-    local src_file=$1
-    local dst_file=$2
-    local c=$3
-
-    src_mod_times=$(stat -c%Y "$src_file")
-    dst_mod_times=$(stat -c%Y "$dst_file")
-
-    if [[ "$dst_mod_times" -gt "$src_mod_times" ]]; then
-        warnings=$(($warnings + 1))
-    fi
-}
-
-
-
 #if c was passed in as a flag then simulate the backup
 if (( ${checking} == 1 )); then
     #simulate the backup
     if ((${first_run} == 1)); then
-        find "${SRC}" -type f | while read file; do
-    
-            pathname_original_file="${SRC}/${file}"
+        find "${SRC}" -maxdepth 1 -type f | while read file; do
+            pathname_original_file="${SRC}/$(basename "${file}")"
             pathname_copied_file="${DST}/$(basename "${file}")"
 
             echo "cp -a ${pathname_original_file} ${pathname_copied_file}"
         done 
     else
         #compare both directories and find anomalies
-
-        # creates arrays that store the files of each directory (only files, not directories)
-        files_in_src=($(find "${SRC}" -type f))
-        files_in_dst=($(find "${DST}" -type f))
-
-
-        for file in "${files_in_src[@]}"; do
-            pathname_copied_file="${DST}/$(basename "$file")"
+        find "${SRC}" -maxdepth 1 -type f | while read file; do
+            pathname_copied_file="${DST}/$(basename "${file}")"
 
             # verify if the files exists on DST
             if [[ -f "${pathname_copied_file}" ]]; then
@@ -130,7 +107,7 @@ if (( ${checking} == 1 )); then
             fi
         done
         # checks if there are files in backup that are not in SRC and remove them
-        remove_deleted_files "${files_in_dst[@]}" "${SRC}" ${checking}
+        remove_deleted_files "${DST}" "${SRC}" ${checking}
     fi
 
 
@@ -143,34 +120,31 @@ else # if c was not passed in as a flag, do the actual backup
     if ((${first_run} == 1)); then
 
         # copy all the files in SRC to DST
-        find "${SRC}" -type f | while read file; do
+        find "${SRC}" -maxdepth 1 -type f | while read file; do
 
             pathname_original_file="${SRC}/$(basename "$file")"
             pathname_copied_file="${DST}/$(basename "$file")"
 
-            cp -a ${pathname_original_file} ${pathname_copied_file}
+            cp -a "${pathname_original_file}" "${pathname_copied_file}"
             echo "cp -a ${pathname_original_file} ${pathname_copied_file}"
         done
 
     else
-        files_in_src=($(find "${SRC}" -type f))
-        files_in_dst=($(find "${DST}" -type f))
 
-        echo ${files_in_dst[@]}
-
-        for file in "${files_in_src[@]}"; do
-            pathname_copied_file="${DST}/$(basename "$file")"
+        find "${SRC}" -maxdepth 1 -type f | while read file; do
+            pathname_copied_file="${DST}/$(basename "${file}")"
 
             # verify if the files exists on DST
             if [[ -f "${pathname_copied_file}" ]]; then
                 compare_modification_dates "${file}" "${pathname_copied_file}" "${checking}"
             else
                 # if file is not in DST then copy it
-                cp -a ${file} ${pathname_copied_file}
+                cp -a "${file}" "${pathname_copied_file}"
+                echo "cp -a ${file} ${pathname_copied_file}"
             fi
         done
         # checks if there are files in backup that are not in SRC and remove them
-        remove_deleted_files files_in_dst[@] "${SRC}" ${checking} #files_in_dst is not being passed as an array -> solve this
+        remove_deleted_files "${DST}" "${SRC}" ${checking} #files_in_dst is not being passed as an array -> solve this
     fi
 fi
 
