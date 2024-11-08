@@ -29,6 +29,7 @@ while getopts "c" opt; do
         * )
             echo "Invalid option. Options should only include: -c (checking); -b; -r."
             exit 1
+            ;;
 
     esac
 
