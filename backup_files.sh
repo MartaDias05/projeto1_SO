@@ -17,8 +17,6 @@ size_copied=0
 deleted=0
 size_deleted=0
 
-declare -a files_in_src # files_in_src will hold all of the files present in src directory
-declare -a files_in_bck # holds all of the files present in backup directory
 
 #initialize the option variables with the correct values having in consideration the flag passed in
 while getopts "c" opt; do
