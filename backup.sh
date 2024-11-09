@@ -1,10 +1,11 @@
 #!/bin/bash
 
 # REDO THE FUNCTIONS TO SUPPORT SUB-DIRECTORIES
-. ./utilities_backup/remove_deleted_files.sh
-. ./utilities_backup/compare_modification_dates.sh
-. ./utilities_backup/cp_all_files.sh
-. ./utilities_backup/cp_new_mod_files.sh
+#. ./utilities_backup/remove_deleted_files.sh
+#. ./utilities_backup/compare_modification_dates.sh
+#. ./utilities_backup/cp_all_files.sh
+#. ./utilities_backup/cp_new_mod_files.sh
+. ./utilities_backup/contains_element.sh
 
 regex=''
 checking=0
@@ -13,7 +14,8 @@ b=0
 first_run=0
 OPTSTRING=":cr:b:"
 
-declare -a not_to_copy_files
+declare -a not_to_cp_files
+declare -a matched_regex_files
 
 # checks if -r and -b were passed as flags
 while getopts ${OPTSTRING} opt; do
@@ -26,17 +28,36 @@ while getopts ${OPTSTRING} opt; do
         r)
             regex="${OPTARG}"
             r=1
+
+            # build an array with the files / directories whose name matches regex (this code is only triggered when r is passed in)
+            # cant do this here -> SRC is not defined yet...
+            for item in "$SRC"/*; do
+                echo "${item}"
+                if [[ "$(basename "$item")" =~ $regex ]]; then
+
+                    matched_regex_files+=("${item}")
+                    #control
+                    echo "${matched_regex_files[@]}"
+                fi
+
+            done
+
             ;;
         b)
             # check if the file passed in as argument is a valid file
             if ! [[ -f "${OPTARG}" ]]; then
                echo "${OPTARG} file does not exist!"
+               echo "Usage: ./backup.sh [-c] [-b tfile] [-r regexpr] dir_trabalho dir_backup"
                exit 1
             fi
 
             b=1
 
             # read the file and add each not to copy file to the array
+            while read -r LINE; do
+                # append files to not_to_cp_files;
+                not_to_cp_files+=("${LINE}")
+            done < "${OPTARG}"
             ;;
         :)
             echo "Option -${OPTARG} requires an argument."
@@ -99,17 +120,40 @@ fi
 
 #if c was passed in as a flag then simulate the backup
 if (( ${checking} == 1 )); then
+
     if ((${first_run} == 1)); then
 
         # check if -r was triggered
         if [[ ${r} == 1 ]]; then
+
+            # build an array that holds the files that match the regex expression
             
+            if [[ ${b} == 1 ]]; then
+
+                # check if any of the files on the array built above belongs to not_to_cp_files
+                # if any belongs -> ignore (do not copy)
+
+            else
+
+                # copy all the files in the array built above
+
+            fi
+
+        elif [[ ${b} == 1 ]]; then
+
+            # copy all the files that do not belong to not_to_cp_files
+
         else
-            cp_all_files "${SRC}" "${DST}" ${checking}
+
+            cp_all_files "${SRC}" "${DST}" ${checking} # mofify this function to deal with directories
+        
         fi
+    
     else
+    
         cp_new_mod_files "${SRC}" "${DST}" ${checking}
         remove_deleted_files "${DST}" "${SRC}" ${checking}
+    
     fi
 
 else # if c was not passed in as a flag, do the actual backup
