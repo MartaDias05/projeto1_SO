@@ -1,7 +1,5 @@
 #!/bin/bash
 
-regex=''
-
 SRC=${@:OPTIND:1}
 DST=${@:OPTIND+1:1}
 
