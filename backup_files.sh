@@ -1,6 +1,9 @@
 #!/bin/bash
 
-. ./utilities/remove_deleted_files.sh
+. ./utilities_backup_files/remove_deleted_files.sh
+. ./utilities_backup_files/compare_modification_dates.sh
+. ./utilities_backup_files/cp_all_files.sh
+. ./utilities_backup_files/cp_new_mod_files.sh
 
 
 checking=0
@@ -14,8 +17,6 @@ size_copied=0
 deleted=0
 size_deleted=0
 
-declare -a files_in_src # files_in_src will hold all of the files present in src directory
-declare -a files_in_bck # holds all of the files present in backup directory
 
 #initialize the option variables with the correct values having in consideration the flag passed in
 while getopts "c" opt; do
@@ -28,6 +29,7 @@ while getopts "c" opt; do
         * )
             echo "Invalid option. Options should only include: -c (checking); -b; -r."
             exit 1
+            ;;
 
     esac
 
@@ -38,6 +40,7 @@ done
 # access positional arguments using array expansion ${@:START:1} ->> https://web.archive.org/web/20130927000512/http://www.devhands.com/2010/01/handling-positional-and-non-positional-command-line-arguments-from-a-shell-script/
 SRC=${@:OPTIND:1}
 DST=${@:OPTIND+1:1}
+
 
 #check if only 2 positional arguments were passed in
 if [[ $(($# - OPTIND+1)) -ne 2 ]]; then
@@ -82,55 +85,13 @@ fi
 
 
 
-
-# function to compare modification dates
-compare_modification_dates() {
-    local src_file=$1
-    local dst_file=$2
-    local c=$3
-
-    src_mod_times=$(stat -c%Y "$src_file")
-    dst_mod_times=$(stat -c%Y "$dst_file")
-
-    if [[ "$dst_mod_times" -gt "$src_mod_times" ]]; then
-        warnings=$(($warnings + 1))
-    fi
-}
-
-
-
 #if c was passed in as a flag then simulate the backup
 if (( ${checking} == 1 )); then
-    #simulate the backup
     if ((${first_run} == 1)); then
-        find "${SRC}" -type f | while read file; do
-    
-            pathname_original_file="${SRC}/${file}"
-            pathname_copied_file="${DST}/$(basename "${file}")"
-
-            echo "cp -a ${pathname_original_file} ${pathname_copied_file}"
-        done 
+        cp_all_files "${SRC}" "${DST}" ${checking}
     else
-        #compare both directories and find anomalies
-
-        # creates arrays that store the files of each directory (only files, not directories)
-        files_in_src=($(find "${SRC}" -type f))
-        files_in_dst=($(find "${DST}" -type f))
-
-
-        for file in "${files_in_src[@]}"; do
-            pathname_copied_file="${DST}/$(basename "$file")"
-
-            # verify if the files exists on DST
-            if [[ -f "${pathname_copied_file}" ]]; then
-                compare_modification_dates "${file}" "${pathname_copied_file}" "${checking}"
-            else
-                # if file is not in DST then copy it
-                echo "cp -a ${file} ${pathname_copied_file}"
-            fi
-        done
-        # checks if there are files in backup that are not in SRC and remove them
-        remove_deleted_files "${files_in_dst[@]}" "${SRC}" ${checking}
+        cp_new_mod_files "${SRC}" "${DST}" ${checking}
+        remove_deleted_files "${DST}" "${SRC}" ${checking}
     fi
 
 
@@ -141,36 +102,10 @@ if (( ${checking} == 1 )); then
 else # if c was not passed in as a flag, do the actual backup
     
     if ((${first_run} == 1)); then
-
-        # copy all the files in SRC to DST
-        find "${SRC}" -type f | while read file; do
-
-            pathname_original_file="${SRC}/$(basename "$file")"
-            pathname_copied_file="${DST}/$(basename "$file")"
-
-            cp -a ${pathname_original_file} ${pathname_copied_file}
-            echo "cp -a ${pathname_original_file} ${pathname_copied_file}"
-        done
-
+        cp_all_files "${SRC}" "${DST}" ${checking}
     else
-        files_in_src=($(find "${SRC}" -type f))
-        files_in_dst=($(find "${DST}" -type f))
-
-        echo ${files_in_dst[@]}
-
-        for file in "${files_in_src[@]}"; do
-            pathname_copied_file="${DST}/$(basename "$file")"
-
-            # verify if the files exists on DST
-            if [[ -f "${pathname_copied_file}" ]]; then
-                compare_modification_dates "${file}" "${pathname_copied_file}" "${checking}"
-            else
-                # if file is not in DST then copy it
-                cp -a ${file} ${pathname_copied_file}
-            fi
-        done
-        # checks if there are files in backup that are not in SRC and remove them
-        remove_deleted_files files_in_dst[@] "${SRC}" ${checking} #files_in_dst is not being passed as an array -> solve this
+        cp_new_mod_files "${SRC}" "${DST}" ${checking}
+        remove_deleted_files "${DST}" "${SRC}" ${checking} 
     fi
 fi
 
