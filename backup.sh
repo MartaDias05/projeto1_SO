@@ -1,7 +1,6 @@
 #!/bin/bash
 
-# REDO THE FUNCTIONS TO SUPPORT SUB-DIRECTORIES
-#. ./utilities_backup/remove_deleted_files.sh
+. ./utilities_backup/remove_deleted_files.sh
 . ./utilities_backup_files/compare_modification_dates.sh
 . ./utilities_backup/cp_all_files.sh
 . ./utilities_backup/cp_new_mod_files.sh
@@ -12,21 +11,23 @@ BACKUP_SCRIPT_PATH="$(realpath "$0")"
 export BACKUP_SCRIPT_PATH
 
 # init variables so they're always passed in the functions
-regex="${regex:-""}"
-not_to_cp_filename="${not_to_cp_filename:-""}"
+regex="${regex:-" "}"
+not_to_cp_filename="${not_to_cp_filename:-"some file name"}"
 checking="${checking:-0}"
 r="${r:-0}"
 b="${b:-0}"
+
 
 OPTSTRING=":cr:b:"
 
 declare -a not_to_cp_files
 declare -a matched_regex_files
 
-not_to_cp_files=("${not_to_cp_files[@]:-""}")
-matched_regex_files=("${matched_regex_files[@]:-""}")
+# inintialize the arrays so they're always passed in as arguments in function calls
+not_to_cp_files=("${not_to_cp_files[@]:-" "}")
+matched_regex_files=("${matched_regex_files[@]:-" "}")
 
-# checks if -r and -b were passed as flags
+# checks if -c, -r and -b were passed as flags
 while getopts ${OPTSTRING} opt; do
 
     case ${opt} in
@@ -37,6 +38,7 @@ while getopts ${OPTSTRING} opt; do
         r)
             regex="${OPTARG}"
             r=1
+            matched_regex_files=() # clears the array from the initialized value
             ;;
         b)
             # check if the file passed in as argument is a valid file
@@ -48,6 +50,7 @@ while getopts ${OPTSTRING} opt; do
 
             b=1
             not_to_cp_filename="${OPTARG}"
+            not_to_cp_files=()
 
             # read the file and add each not to copy file to the array
             while read -r LINE; do
@@ -124,15 +127,6 @@ if [[ -z "${BACKUP_INIT_CALL}" ]]; then
 fi
 
 
-# build an array with the files / directories whose name matches regex (this code is only triggered when r is passed in)
-for item in "${SRC}"/*; do
-    if [[ "$(basename "$item")" =~ ${regex} ]]; then
-
-        matched_regex_files+=("${item}")
-    fi
-done
-
-
 #if c was passed in as a flag then simulate the backup
 if (( ${checking} == 1 )); then
 
@@ -142,8 +136,7 @@ if (( ${checking} == 1 )); then
             
             if [[ ${b} == 1 ]]; then
 
-                # check if any of the files on the array built for regex matching files belongs to not_to_cp_files
-                for item in "${matched_regex_files[@]}";do
+                for item in "${SRC}"/*;do
                
                     if [[ $( contains_element "${item}" "${not_to_cp_files[@]}" ) == 0 ]]; then
                     
@@ -155,7 +148,11 @@ if (( ${checking} == 1 )); then
 
                         elif [[ -f "${item}"  ]]; then
 
-                            echo "cp -a "${item}" "${DST}""
+                            if [[ "$(basename "$item")" =~ ${regex} ]]; then
+
+                                echo "cp -a "${item}" "${DST}""
+
+                            fi
 
                         fi
 
@@ -165,19 +162,23 @@ if (( ${checking} == 1 )); then
 
             else
 
-                # copy all the files in the array built above
-                for item in "${matched_regex_files[@]}";do
+                for item in "${SRC}"/*;do
 
+                    new_dst="${DST}/$(basename "${item}")"
+            
                     if [[ -d "${item}" ]]; then
-                        
-                        new_dst="${DST}/$(basename "${item}")"
+                
                         echo "mkdir "${new_dst}""
                         $0 -c -r "${regex}" "${item}" "${new_dst}" # Script recursively spawns a new instance of itself
 
                     elif [[ -f "${item}"  ]]; then
 
-                        echo "cp -a "${item}" "${DST}""
-                    
+                        if [[ "$(basename "$item")" =~ ${regex} ]]; then
+
+                            echo "cp -a "${item}" "${new_dst}""
+
+                        fi
+
                     fi
 
                 done
@@ -191,15 +192,16 @@ if (( ${checking} == 1 )); then
                
                 if [[ $( contains_element "${item}" "${not_to_cp_files[@]}" ) == 0 ]]; then
                     
+                    new_dst="${DST}/$(basename "${item}")"
+
                     if [[ -d "${item}" ]]; then
                         
-                        new_dst="${DST}/$(basename "${item}")"
                         echo "mkdir "${new_dst}""
                         $0 -c -b "${not_to_cp_filename}" "${item}" "${new_dst}" # Script recursively spawns a new instance of itself
 
                     elif [[ -f "${item}"  ]]; then
 
-                        echo "cp -a "${item}" "${DST}""
+                        echo "cp -a "${item}" "${new_dst}""
 
                     fi
 
@@ -215,8 +217,8 @@ if (( ${checking} == 1 )); then
     
     else
 
-        cp_new_mod_files "${SRC}" "${DST}" ${checking} ${b} "${not_to_cp_files[@]}" "${not_to_cp_filename}" $r "${matched_regex_files}" "${regex}"
-        #remove_deleted_files "${DST}" "${SRC}" ${checking}
+        remove_deleted_files "${DST}" "${SRC}" ${checking}
+        cp_new_mod_files "${SRC}" "${DST}" ${checking} ${b} "${not_to_cp_files[@]}" "${not_to_cp_filename}" $r "${regex}"
     
     fi
 
@@ -229,20 +231,26 @@ else # if c was not passed in as a flag, do the actual backup
             
             if [[ ${b} == 1 ]]; then
 
-                # check if any of the files on the array built for regex matching files belongs to not_to_cp_files
-                for item in "${matched_regex_files[@]}";do
+                for item in "${SRC}"/*;do
                
                     if [[ $( contains_element "${item}" "${not_to_cp_files[@]}" ) == 0 ]]; then
                     
+                        new_dst="${DST}/$(basename "${item}")"
+
                         if [[ -d "${item}" ]]; then
                         
-                            new_dst="${DST}/$(basename "${item}")"
                             echo "mkdir "${new_dst}""
+                            mkdir "${new_dst}"
                             $0 -r "${regex}" -b "${not_to_cp_filename}" "${item}" "${new_dst}" # Script recursively spawns a new instance of itself
 
                         elif [[ -f "${item}"  ]]; then
 
-                            echo "cp -a "${item}" "${DST}""
+                            if [[ "$(basename "$item")" =~ ${regex} ]]; then
+
+                                echo "cp -a "${item}" "${new_dst}""
+                                cp -a "${item}" "${new_dst}"
+
+                            fi
 
                         fi
 
@@ -252,19 +260,25 @@ else # if c was not passed in as a flag, do the actual backup
 
             else
 
-                # copy all the files in the array built above
-                for item in "${matched_regex_files[@]}";do
+                for item in "${SRC}"/*;do
 
+                    new_dst="${DST}/$(basename "${item}")"
+                    
                     if [[ -d "${item}" ]]; then
                         
-                        new_dst="${DST}/$(basename "${item}")"
                         echo "mkdir "${new_dst}""
+                        mkdir "${new_dst}"
                         $0 -r "${regex}" "${item}" "${new_dst}" # Script recursively spawns a new instance of itself
 
                     elif [[ -f "${item}"  ]]; then
 
-                        echo "cp -a "${item}" "${DST}""
-                    
+                        if [[ "$(basename "$item")" =~ ${regex} ]]; then
+
+                            echo "cp -a "${item}" "${new_dst}""
+                            cp -a "${item}" "${new_dst}"
+
+                        fi
+
                     fi
 
                 done
@@ -278,15 +292,18 @@ else # if c was not passed in as a flag, do the actual backup
                
                 if [[ $( contains_element "${item}" "${not_to_cp_files[@]}" ) == 0 ]]; then
                     
+                    new_dst="${DST}/$(basename "${item}")"
+
                     if [[ -d "${item}" ]]; then
                         
-                        new_dst="${DST}/$(basename "${item}")"
                         echo "mkdir "${new_dst}""
+                        mkdir "${new_dst}"
                         $0 -b "${not_to_cp_filename}" "${item}" "${new_dst}" # Script recursively spawns a new instance of itself
 
                     elif [[ -f "${item}"  ]]; then
 
-                        echo "cp -a "${item}" "${DST}""
+                        echo "cp -a "${item}" "${new_dst}""
+                        cp -a "${item}" "${new_dst}"
 
                     fi
 
@@ -301,8 +318,8 @@ else # if c was not passed in as a flag, do the actual backup
         fi
         
     else
-
-        cp_new_mod_files "${SRC}" "${DST}" ${checking} ${b} "${not_to_cp_files[@]}" "${not_to_cp_filename}" ${r} "${matched_regex_files}" "${regex}"
-        #remove_deleted_files "${DST}" "${SRC}" ${checking} 
+        remove_deleted_files "${DST}" "${SRC}" ${checking} 
+        cp_new_mod_files "${SRC}" "${DST}" ${checking} ${b} "${not_to_cp_files[@]}" "${not_to_cp_filename}" ${r} "${regex}"
     fi
 fi
+

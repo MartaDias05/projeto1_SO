@@ -25,58 +25,54 @@ cp_new_mod_files()
     local b_files_arr="$5"
     local b_filename="$6"
     local r=$7
-    local r_files_arr="$8"
-    local regex="$9"
+    local regex="$8"
 
-    echo "r -> "${b_filename}""
-    echo "c -> $c"
-    echo "b -> $b"
 
-    find "${SRC}" -maxdepth 1 -mindepth 1 | while read item; do
+    if [[ $r == 1 ]]; then
 
-        if [[ $r == 1 ]]; then
-
-            if [[ $b == 1 ]]; then
+        if [[ $b == 1 ]]; then
                 
-                for item in "${r_files_arr[@]}";do
+            for item in "${SRC}"/*;do
             
-                    if [[ $( contains_element "${item}" "${b_files_arr[@]}" ) == 0 ]]; then
+                if [[ $( contains_element "${item}" "${b_files_arr[@]}" ) == 0 ]]; then
                         
-                        if [[ -d "${item}" ]]; then
+                    if [[ -d "${item}" ]]; then
                             
-                            new_dst="${DST}/$(basename "${item}")"
+                        new_dst="${DST}/$(basename "${item}")"
 
-                            if [[ -d "${new_dst}" ]]; then # check if directory already exists in backup
+                        if [[ -d "${new_dst}" ]]; then # check if directory already exists in backup
                             
-                                if [[ $c == 1 ]]; then
+                            if [[ $c == 1 ]]; then
 
-                                    "${BACKUP_SCRIPT_PATH}" -c -r "${regex}" -b "${b_filename}" "${item}" "${new_dst}"
+                                "${BACKUP_SCRIPT_PATH}" -c -r "${regex}" -b "${b_filename}" "${item}" "${new_dst}"
 
-                                else 
+                            else 
 
-                                    "${BACKUP_SCRIPT_PATH}" -r "${regex}" -b "${b_filename}" "${item}" "${new_dst}" 
+                                "${BACKUP_SCRIPT_PATH}" -r "${regex}" -b "${b_filename}" "${item}" "${new_dst}" 
 
-                                fi
+                            fi
 
-                            else
+                        else
                             
-                                echo "mkdir "${new_dst}""
-                                if [[ $c == 1 ]]; then
+                            echo "mkdir "${new_dst}""
+                            if [[ $c == 1 ]]; then
 
-                                    "${BACKUP_SCRIPT_PATH}" -c -r "${regex}" -b "${b_filename}" "${item}" "${new_dst}" 
+                                "${BACKUP_SCRIPT_PATH}" -c -r "${regex}" -b "${b_filename}" "${item}" "${new_dst}" 
 
-                                else 
+                            else 
 
-                                    mkdir "${new_dst}"
-                                    "${BACKUP_SCRIPT_PATH}" -r "${regex}" -b "${b_filename}" "${item}" "${new_dst}"
+                                mkdir "${new_dst}"
+                                "${BACKUP_SCRIPT_PATH}" -r "${regex}" -b "${b_filename}" "${item}" "${new_dst}"
 
-                                fi
+                            fi
 
-                            fi 
+                        fi 
 
-                        elif [[ -f "${item}"  ]]; then
+                    elif [[ -f "${item}"  ]]; then
 
-                            pathname_copied_file="${DST}/$(basename "${item}")"
+                        pathname_copied_file="${DST}/$(basename "${item}")"
+
+                        if [[ "$(basename "$item")" =~ ${regex} ]]; then
 
                             # verify if the files exists on DST
                             if [[ -f "${pathname_copied_file}" ]]; then
@@ -93,51 +89,57 @@ cp_new_mod_files()
 
                     fi
 
-                done
+                fi
 
-            else
+            done
 
-                for item in "${r_files_arr[@]}";do
+        else
 
-                    if [[ -d "${item}" ]]; then
+            for item in "${SRC}"/*;do
+
+                if [[ -d "${item}" ]]; then
                         
-                        new_dst="${DST}/$(basename "${item}")"
+                    new_dst="${DST}/$(basename "${item}")"
 
-                        if [[ -d "${new_dst}" ]]; then
+                    if [[ -d "${new_dst}" ]]; then
                         
-                            if [[ $c == 1 ]]; then
+                        if [[ $c == 1 ]]; then
 
-                                "${BACKUP_SCRIPT_PATH}" -c -r "${regex}" "${item}" "${new_dst}"
+                            "${BACKUP_SCRIPT_PATH}" -c -r "${regex}" "${item}" "${new_dst}"
 
-                            else 
+                        else 
 
-                                "${BACKUP_SCRIPT_PATH}" -r "${regex}" "${item}" "${new_dst}" 
+                            "${BACKUP_SCRIPT_PATH}" -r "${regex}" "${item}" "${new_dst}" 
 
-                            fi
+                        fi
 
-                        else
+                    else
                         
-                            echo "mkdir "${new_dst}""
-                            if [[ $c == 1 ]]; then
+                        echo "mkdir "${new_dst}""
+                        if [[ $c == 1 ]]; then
 
-                                "${BACKUP_SCRIPT_PATH}" -c -r "${regex}" "${item}" "${new_dst}" 
+                            "${BACKUP_SCRIPT_PATH}" -c -r "${regex}" "${item}" "${new_dst}" 
 
-                            else 
+                        else 
 
-                                mkdir "${new_dst}"
-                                "${BACKUP_SCRIPT_PATH}" -r "${regex}" "${item}" "${new_dst}"
+                            mkdir "${new_dst}"
+                            "${BACKUP_SCRIPT_PATH}" -r "${regex}" "${item}" "${new_dst}"
 
-                            fi
+                        fi
 
-                        fi 
+                    fi 
 
-                    elif [[ -f "${item}"  ]]; then
+                elif [[ -f "${item}"  ]]; then
 
-                        pathname_copied_file="${DST}/$(basename "${item}")"
+                    pathname_copied_file="${DST}/$(basename "${item}")"
+
+                    if [[ "$(basename "$item")" =~ ${regex} ]]; then
 
                         # verify if the files exists on DST
                         if [[ -f "${pathname_copied_file}" ]]; then
+                            
                             compare_modification_dates "${item}" "${pathname_copied_file}" "${c}"
+
                         else
                             # if file is not in DST then copy it
                             echo "cp -a ${item} ${pathname_copied_file}"
@@ -145,23 +147,27 @@ cp_new_mod_files()
                                 cp -a ${item} ${pathname_copied_file}
                             fi
                         fi
-                    
+
                     fi
+                    
+                fi
 
-                done
+            done
 
-            fi
+        fi
 
-        elif [[ $b == 1 ]]; then
+    elif [[ $b == 1 ]]; then
+
+        for item in "${SRC}"/*;do
 
             if [[ $( contains_element "${item}" "${not_to_cp_files[@]}" ) == 0 ]]; then
-                    
-                if [[ -d "${item}" ]]; then
                         
+                if [[ -d "${item}" ]]; then
+                            
                     new_dst="${DST}/$(basename "${item}")"
 
                     if [[ -d "${new_dst}" ]]; then
-                    
+                        
                         if [[ $c == 1 ]]; then
 
                             "${BACKUP_SCRIPT_PATH}" -c "${item}" "${new_dst}" 
@@ -173,7 +179,7 @@ cp_new_mod_files()
                         fi
 
                     else
-                    
+                        
                         echo "mkdir "${new_dst}""
                         if [[ $c == 1 ]]; then
 
@@ -207,14 +213,19 @@ cp_new_mod_files()
 
             fi
 
-        else
+        done
+
+
+    else
+
+        for item in "${SRC}"/*;do
 
             if [[ -d "${item}" ]]; then
 
                 new_dst="${DST}/$(basename "${item}")"
 
                 if [[ -d "${new_dst}" ]]; then
-                
+                    
                     if [[ $c == 1 ]]; then
 
                         "${BACKUP_SCRIPT_PATH}" -c "${item}" "${new_dst}" 
@@ -226,7 +237,7 @@ cp_new_mod_files()
                     fi
 
                 else
-                
+                    
                     echo "mkdir "${new_dst}""
                     if [[ $c == 1 ]]; then
 
@@ -258,7 +269,9 @@ cp_new_mod_files()
 
             fi
 
-        fi
+        done
+        
 
-    done
+    fi
+
 }
