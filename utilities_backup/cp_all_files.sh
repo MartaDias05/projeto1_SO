@@ -23,15 +23,12 @@ cp_all_files()
             echo "mkdir "${new_dst}""
 
             if [[ $c == 0 ]]; then
-            
-                mkdir "${new_dst}"
-                "${BACKUP_SCRIPT_PATH}" "${item}" "${new_dst}"
 
-            else
-            
-                "${BACKUP_SCRIPT_PATH}" -c "${item}" "${new_dst}"
+                mkdir "${new_dst}"
 
             fi
+
+            cp_all_files "${item}" "${new_dst}" $c
 
         elif [[ -f "${item}" ]]; then
 
@@ -41,7 +38,9 @@ cp_all_files()
             echo "cp -a ${pathname_original_file} ${pathname_copied_file}"
 
             if [[ ${c} == 0 ]]; then
+
                 cp -a ${pathname_original_file} ${pathname_copied_file}
+            
             fi
 
         fi

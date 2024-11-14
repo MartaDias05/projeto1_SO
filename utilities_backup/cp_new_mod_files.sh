@@ -12,9 +12,7 @@
 # b_files_arr -> array with the files that are not to be copied
 # b_filename -> path to the file that contains the files not to be copied
 # value of flag -r (0 or 1)
-# r_files_arr -> array with the files that obey to a certain regex pattern
 # regex -> regex pattern to be respected
-
 
 cp_new_mod_files()
 {
@@ -27,251 +25,37 @@ cp_new_mod_files()
     local r=$7
     local regex="$8"
 
-
-    if [[ $r == 1 ]]; then
-
+    for item in "${SRC}"/*;do
+        
         if [[ $b == 1 ]]; then
-                
-            for item in "${SRC}"/*;do
+
+            contains_element "${item}" "${b_files_arr[@]}"
             
-                if [[ $( contains_element "${item}" "${b_files_arr[@]}" ) == 0 ]]; then
-                        
-                    if [[ -d "${item}" ]]; then
-                            
-                        new_dst="${DST}/$(basename "${item}")"
-
-                        if [[ -d "${new_dst}" ]]; then # check if directory already exists in backup
-                            
-                            if [[ $c == 1 ]]; then
-
-                                "${BACKUP_SCRIPT_PATH}" -c -r "${regex}" -b "${b_filename}" "${item}" "${new_dst}"
-
-                            else 
-
-                                "${BACKUP_SCRIPT_PATH}" -r "${regex}" -b "${b_filename}" "${item}" "${new_dst}" 
-
-                            fi
-
-                        else
-                            
-                            echo "mkdir "${new_dst}""
-                            if [[ $c == 1 ]]; then
-
-                                "${BACKUP_SCRIPT_PATH}" -c -r "${regex}" -b "${b_filename}" "${item}" "${new_dst}" 
-
-                            else 
-
-                                mkdir "${new_dst}"
-                                "${BACKUP_SCRIPT_PATH}" -r "${regex}" -b "${b_filename}" "${item}" "${new_dst}"
-
-                            fi
-
-                        fi 
-
-                    elif [[ -f "${item}"  ]]; then
-
-                        pathname_copied_file="${DST}/$(basename "${item}")"
-
-                        if [[ "$(basename "$item")" =~ ${regex} ]]; then
-
-                            # verify if the files exists on DST
-                            if [[ -f "${pathname_copied_file}" ]]; then
-                                compare_modification_dates "${item}" "${pathname_copied_file}" "${c}"
-                            else
-                                # if file is not in DST then copy it
-                                echo "cp -a ${item} ${pathname_copied_file}"
-                                if [[ ${c} == 0 ]]; then
-                                    cp -a ${item} ${pathname_copied_file}
-                                fi
-                            fi
-
-                        fi
-
-                    fi
-
-                fi
-
-            done
-
-        else
-
-            for item in "${SRC}"/*;do
-
-                if [[ -d "${item}" ]]; then
-                        
-                    new_dst="${DST}/$(basename "${item}")"
-
-                    if [[ -d "${new_dst}" ]]; then
-                        
-                        if [[ $c == 1 ]]; then
-
-                            "${BACKUP_SCRIPT_PATH}" -c -r "${regex}" "${item}" "${new_dst}"
-
-                        else 
-
-                            "${BACKUP_SCRIPT_PATH}" -r "${regex}" "${item}" "${new_dst}" 
-
-                        fi
-
-                    else
-                        
-                        echo "mkdir "${new_dst}""
-                        if [[ $c == 1 ]]; then
-
-                            "${BACKUP_SCRIPT_PATH}" -c -r "${regex}" "${item}" "${new_dst}" 
-
-                        else 
-
-                            mkdir "${new_dst}"
-                            "${BACKUP_SCRIPT_PATH}" -r "${regex}" "${item}" "${new_dst}"
-
-                        fi
-
-                    fi 
-
-                elif [[ -f "${item}"  ]]; then
-
-                    pathname_copied_file="${DST}/$(basename "${item}")"
-
-                    if [[ "$(basename "$item")" =~ ${regex} ]]; then
-
-                        # verify if the files exists on DST
-                        if [[ -f "${pathname_copied_file}" ]]; then
-                            
-                            compare_modification_dates "${item}" "${pathname_copied_file}" "${c}"
-
-                        else
-                            # if file is not in DST then copy it
-                            echo "cp -a ${item} ${pathname_copied_file}"
-                            if [[ ${c} == 0 ]]; then
-                                cp -a ${item} ${pathname_copied_file}
-                            fi
-                        fi
-
-                    fi
-                    
-                fi
-
-            done
-
+            if [[ $? -eq 1 ]]; then
+            
+                continue
+            
+            fi
+            
         fi
 
-    elif [[ $b == 1 ]]; then
+        if [[ -d "${item}" ]]; then
 
-        for item in "${SRC}"/*;do
+            cp_dir "${item}" "${DST}" $c $b "${b_files_arr[@]}" "${b_filename}" $r "${regex}"
 
-            if [[ $( contains_element "${item}" "${not_to_cp_files[@]}" ) == 0 ]]; then
-                        
-                if [[ -d "${item}" ]]; then
-                            
-                    new_dst="${DST}/$(basename "${item}")"
+        elif [[ -f "${item}"  ]]; then
 
-                    if [[ -d "${new_dst}" ]]; then
-                        
-                        if [[ $c == 1 ]]; then
+            # check if item matches regex
+            if [[ $r == 1 && ! "$(basename "$item")" =~ ${regex} ]]; then
 
-                            "${BACKUP_SCRIPT_PATH}" -c "${item}" "${new_dst}" 
-
-                        else 
-
-                            "${BACKUP_SCRIPT_PATH}" "${item}" "${new_dst}" 
-
-                        fi
-
-                    else
-                        
-                        echo "mkdir "${new_dst}""
-                        if [[ $c == 1 ]]; then
-
-                            "${BACKUP_SCRIPT_PATH}" -c -b "${b_filename}" "${item}" "${new_dst}" 
-
-                        else 
-
-                            mkdir "${new_dst}"
-                            "${BACKUP_SCRIPT_PATH}" -b "${b_filename}" "${item}" "${new_dst}"
-
-                        fi
-
-                    fi 
-
-                elif [[ -f "${item}"  ]]; then
-
-                    pathname_copied_file="${DST}/$(basename "${item}")"
-
-                    # verify if the files exists on DST
-                    if [[ -f "${pathname_copied_file}" ]]; then
-                        compare_modification_dates "${item}" "${pathname_copied_file}" "${c}"
-                    else
-                        # if file is not in DST then copy it
-                        echo "cp -a ${item} ${pathname_copied_file}"
-                        if [[ ${c} == 0 ]]; then
-                            cp -a ${item} ${pathname_copied_file}
-                        fi
-                    fi
-
-                fi
+                continue
 
             fi
 
-        done
+            cp_file "${item}" "${DST}" $c
+                        
+        fi
 
-
-    else
-
-        for item in "${SRC}"/*;do
-
-            if [[ -d "${item}" ]]; then
-
-                new_dst="${DST}/$(basename "${item}")"
-
-                if [[ -d "${new_dst}" ]]; then
-                    
-                    if [[ $c == 1 ]]; then
-
-                        "${BACKUP_SCRIPT_PATH}" -c "${item}" "${new_dst}" 
-
-                    else 
-
-                        "${BACKUP_SCRIPT_PATH}" "${item}" "${new_dst}" 
-
-                    fi
-
-                else
-                    
-                    echo "mkdir "${new_dst}""
-                    if [[ $c == 1 ]]; then
-
-                        "${BACKUP_SCRIPT_PATH}" -c "${item}" "${new_dst}" 
-
-                    else 
-
-                        mkdir "${new_dst}"
-                        "${BACKUP_SCRIPT_PATH}" "${item}" "${new_dst}" 
-
-                    fi
-
-                fi                
-
-            elif [[ -f "${item}" ]]; then
-
-                pathname_copied_file="${DST}/$(basename "${item}")"
-
-                # verify if the files exists on DST
-                if [[ -f "${pathname_copied_file}" ]]; then
-                    compare_modification_dates "${item}" "${pathname_copied_file}" "${c}"
-                else
-                    # if file is not in DST then copy it
-                    echo "cp -a ${item} ${pathname_copied_file}"
-                    if [[ ${c} == 0 ]]; then
-                        cp -a ${item} ${pathname_copied_file}
-                    fi
-                fi
-
-            fi
-
-        done
-        
-
-    fi
+    done
 
 }

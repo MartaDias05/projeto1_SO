@@ -13,6 +13,7 @@
 set +e
 contains_element()
 {
+
     local match=$1
     local element
     shift # this discards $1 (match) from $@ (all arguments passed in)
