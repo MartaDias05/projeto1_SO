@@ -94,10 +94,7 @@ if (( ${checking} == 1 )); then
         remove_deleted_files "${DST}" "${SRC}" ${checking}
     fi
 
-
     #echo "While backuping ${DST}: $errors Erros; $warnings Warnings; $updated Updated; $copied Copied ($size_copied); $deleted Deleted ($size_deleted)"
-
-
 
 else # if c was not passed in as a flag, do the actual backup
     
@@ -107,7 +104,7 @@ else # if c was not passed in as a flag, do the actual backup
         cp_new_mod_files "${SRC}" "${DST}" ${checking}
         remove_deleted_files "${DST}" "${SRC}" ${checking} 
     fi
+    #echo "While backuping ${DST}: $errors Erros; $warnings Warnings; $updated Updated; $copied Copied ($size_copied); $deleted Deleted ($size_deleted)"
 fi
 
-#echo "While backuping ${DST}: $errors Erros; $warnings Warnings; $updated Updated; $copied Copied ($size_copied); $deleted Deleted ($size_deleted)"
 
