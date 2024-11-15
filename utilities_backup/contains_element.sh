@@ -14,18 +14,19 @@ set +e
 contains_element()
 {
 
-    local match=$1
-    local element
+    local match=$(realpath -m "$1") # Normalize match to an absolute path
     shift # this discards $1 (match) from $@ (all arguments passed in)
+    local not_to_cp_files=("$@")
 
-    for element in "$@"; do # for each element in the array
-    
+
+    for element in "${not_to_cp_files[@]}"; do # for each element in the array
+
         if [[ "${element}" == "${match}" ]]; then
-            return 1;
+            return 0 # found a match
         fi
 
     done
 
-    return 0;
+    return 1 # did not found any match
 
 }

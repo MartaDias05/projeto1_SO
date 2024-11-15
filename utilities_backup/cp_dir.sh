@@ -14,20 +14,21 @@
 
 cp_dir()
 {
-    local item="$1"
-    local DST="$2"
-    local c="$3"
-    local b="$4"
-    local b_files_arr="$5"
-    local b_filename="$6"
-    local r="$7"
-    local regex="$8"
+
+    local item=$1
+    local DST=$2
+    local c=$3
+    local b=$4
+    local not_to_cp_filename="$5"
+    local r=$6
+    local regex="$7"
+    local not_to_cp_files=("${@:8}")
 
     new_dst="${DST}/$(basename "${item}")"
 
     if [[ -d "${new_dst}" ]]; then # if directory exists then go into it and check its files
                     
-        cp_new_mod_files "${item}" "${new_dst}" $c $b "${b_files_arr[@]}" "${b_filename}" $r "${regex}"
+        cp_new_mod_files "${item}" "${new_dst}" $c $b "${not_to_cp_filename}" $r "${regex}" "${not_to_cp_files[@]}"
 
 
     else # if directory does not exist then create it and then go into it and check its files
@@ -40,7 +41,7 @@ cp_dir()
                     
         fi
 
-        cp_new_mod_files "${item}" "${new_dst}" $c $b "${b_files_arr[@]}" "${b_filename}" $r "${regex}"
+        cp_new_mod_files "${item}" "${new_dst}" $c $b "${not_to_cp_filename}" $r "${regex}" "${not_to_cp_files[@]}"
 
     fi 
 

@@ -16,22 +16,25 @@
 
 cp_new_mod_files()
 {
+
     local SRC=$1
     local DST=$2
     local c=$3
     local b=$4
-    local b_files_arr="$5"
-    local b_filename="$6"
-    local r=$7
-    local regex="$8"
+    local not_to_cp_filename="$5"
+    local r=$6
+    local regex="$7"
+    local not_to_cp_files=("${@:8}")
 
     for item in "${SRC}"/*;do
+
+        item=$(realpath -m "${item}")
         
         if [[ $b == 1 ]]; then
 
-            contains_element "${item}" "${b_files_arr[@]}"
+            contains_element "${item}" "${not_to_cp_files[@]}"
             
-            if [[ $? -eq 1 ]]; then
+            if [[ $? == 0 ]]; then
             
                 continue
             
@@ -41,7 +44,7 @@ cp_new_mod_files()
 
         if [[ -d "${item}" ]]; then
 
-            cp_dir "${item}" "${DST}" $c $b "${b_files_arr[@]}" "${b_filename}" $r "${regex}"
+            cp_dir "${item}" "${DST}" $c $b "${not_to_cp_filename}" $r "${regex}" "${not_to_cp_files[@]}"
 
         elif [[ -f "${item}"  ]]; then
 

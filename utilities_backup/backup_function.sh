@@ -7,7 +7,7 @@
 # DST
 # value of flag -c (0 or 1)
 # value of flag -b (0 or 1)
-# b_files_arr -> array with the files that are not to be copied
+# not_to_cp_files -> array with the files that are not to be copied
 # b_filename -> path to the file that contains the files not to be copied
 # value of flag -r (0 or 1)
 # regex -> regex pattern to be respected
@@ -20,22 +20,29 @@ backup_function()
     local DST=$2
     local c=$3
     local b=$4
-    local not_to_cp_files="$5"
-    local not_to_cp_filename="$6"
-    local r=$7
-    local regex="$8"
-    local first_run=$9
-
-    echo ${not_to_cp_files[@]}
+    local not_to_cp_filename="$5"
+    local r=$6
+    local regex="$7"
+    local first_run=$8
+    local not_to_cp_files=("${@:9}")
 
     if [[ ${first_run} == 1 ]]; then
 
         for item in "${SRC}"/*;do
 
-            if [[ $b == 1 && $( contains_element "${item}" "${not_to_cp_files[@]}" ) == 1 ]]; then
+            item=$(realpath -m "${item}")
 
-                continue
+            if [[ $b == 1 ]]; then
 
+                
+                contains_element "${item}" "${not_to_cp_files[@]}"
+                
+                if [[ $? == 0 ]]; then
+
+                    continue
+                
+                fi
+                
             fi
 
             if [[ -d "${item}" ]]; then
@@ -49,9 +56,11 @@ backup_function()
 
                 fi
 
-                backup_function "${item}" "${new_dst}" $c $b "${b_files_arr[@]}" "${not_to_cp_filename}" $r "${regex}" $first_run
+                backup_function "${item}" "${new_dst}" $c $b "${not_to_cp_filename}" $r "${regex}" $first_run "${not_to_cp_files[@]}"
 
             elif [[ -f "${item}"  ]]; then
+
+                pathname_copied_file="${DST}/$(basename "${item}")"
 
                 if [[ $r == 1 && ! "$(basename "$item")" =~ $regex ]]; then
 
@@ -59,11 +68,11 @@ backup_function()
                 
                 fi
 
-                echo "cp -a "${item}" "${DST}""
+                echo "cp -a "${item}" "${pathname_copied_file}""
 
                 if [[ $c == 0 ]]; then
 
-                    cp -a "${item}" "${DST}"
+                    cp -a "${item}" "${pathname_copied_file}"
 
                 fi
 
@@ -74,7 +83,7 @@ backup_function()
     else
 
         remove_deleted_files "${DST}" "${SRC}" $c
-        cp_new_mod_files "${SRC}" "${DST}" $c $b "${not_to_cp_files[@]}" "${not_to_cp_filename}" $r "${regex}"
+        cp_new_mod_files "${SRC}" "${DST}" $c $b "${not_to_cp_filename}" $r "${regex}" "${not_to_cp_files[@]}"
 
     fi
 

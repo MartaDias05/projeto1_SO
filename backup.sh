@@ -10,7 +10,7 @@
 . ./utilities_backup/backup_function.sh
 
 # init variables so they're always passed in the functions
-regex="${regex:-" "}"
+regex="${regex:-"some regex"}"
 not_to_cp_filename="${not_to_cp_filename:-"some file name"}"
 c=0
 r=0
@@ -48,27 +48,27 @@ while getopts ${OPTSTRING} opt; do
                exit 1
             fi
 
+            SRC=${@:OPTIND:1}
+
             b=1
             not_to_cp_filename="${OPTARG}"
             not_to_cp_files=()
 
-            SRC=${@:OPTIND:1} # we need SRC here for the relative paths in b file
-
             # read the file and add each not to copy file to the array
             while read -r LINE; do
                 # append files to not_to_cp_files;
-                echo $LINE
-                absolute_path=$(realpath --relative-to="${SRC}" "${LINE}")
-                not_to_cp_files+=("${absolute_path}")
+                not_to_cp_files+=($(realpath -m "${SRC}/${LINE}"))
             done < "${OPTARG}"
             ;;
         :)
             echo "Option -${OPTARG} requires an argument."
+            echo "Usage: ./backup.sh [-c] [-b tfile] [-r regexpr] dir_trabalho dir_backup"
             exit 1
             ;;
         
         ?)
-            echo "Invalid option. Options should only include: -c (checking); -b tfile; -r regexpr."
+            echo "Invalid option. Options should only include: -c; -b; -r"
+            echo "Usage: ./backup.sh [-c] [-b tfile] [-r regexpr] dir_trabalho dir_backup"
             exit 1
             ;;
     esac
@@ -77,9 +77,6 @@ done
 
 SRC=${@:OPTIND:1}
 DST=${@:OPTIND+1:1}
-# convert to absolute paths
-SRC=$(realpath "${SRC}")
-DST=$(realpath "${DST}")
 
 # only validate if this is the initial call of backup.sh
 if [[ -z "${BACKUP_INIT_CALL}" ]]; then
@@ -129,4 +126,4 @@ if [[ -z "${BACKUP_INIT_CALL}" ]]; then
 
 fi
 
-backup_function "${SRC}" "${DST}" $c $b "${not_to_cp_files[@]}" "${not_to_cp_filename}" $r "${regex}" ${first_run}
+backup_function "${SRC}" "${DST}" $c $b "${not_to_cp_filename}" $r "${regex}" ${first_run} "${not_to_cp_files[@]}"
