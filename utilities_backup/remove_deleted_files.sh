@@ -15,12 +15,16 @@ remove_deleted_files() {
     local DST=$1
     local SRC=$2
     local c=$3
+    local item
 
-    find "${DST}" -mindepth 1 -maxdepth 1 | while read item; do
+    echo "DST -> $DST"
+
+    for item in "${DST}"/*; do
 
         if [[ -d "${item}" ]]; then
 
-            dir_name_in_src="$SRC/$(basename "$item")"
+            relative_path=${item#$DST/}
+            dir_name_in_src="${SRC}/${relative_path}" || ((errors++))
 
             # check if directory appears in src
             if ! [[ -d "${dir_name_in_src}" ]]; then
@@ -30,30 +34,30 @@ remove_deleted_files() {
 
                 if [[ $c == 0 ]]; then
 
-                    rm -r "${item}"
+                    n_files=$(find "${item}" -type f | wc -l)
+                    ((deleted += n_files))
+                    deleted_size=$((deleted_size + $(du -sb "${item}" | cut -f1)))
+
+                    rm -r "${item}" || ((errors++))
 
                 fi
-
-            else
-
-                # if so -> call recursively
-                remove_deleted_files "${item}" "${dir_name_in_src}" $c
-            
             fi
 
         elif [[ -f "${item}" ]]; then
 
-            file_name_in_src="${SRC}/$(basename "${item}")"
+            relative_path=${item#$DST/}
+            file_name_in_src="${SRC}/${relative_path}"
 
             if ! [[ -f "${file_name_in_src}" ]]; then
-                #deleted=$(($deleted + 1))
-                #size_deleted=$(($size_deleted + $(stat -c%s "$file")))
                
                 echo "rm ${DST}/$(basename "${item}")"
 
                 if [[ ${c} == 0 ]]; then
 
-                    rm "${DST}/$(basename "${item}")"
+                    ((deleted++))
+                    deleted_size=$((deleted_size + $(stat -c %s "${item}")))
+
+                    rm "${DST}/$(basename "${item}")" || ((errors++))
                 
                 fi
             fi 

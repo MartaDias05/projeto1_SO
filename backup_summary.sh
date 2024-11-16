@@ -1,7 +1,7 @@
 #!/bin/bash
 
 . ./utilities_backup/remove_deleted_files.sh
-. ./utilities_backup_files/compare_modification_dates.sh
+. ./utilities_backup/compare_modification_dates.sh
 . ./utilities_backup/cp_all_files.sh
 . ./utilities_backup/cp_new_mod_files.sh
 . ./utilities_backup/contains_element.sh
@@ -78,6 +78,7 @@ done
 SRC=${@:OPTIND:1}
 DST=${@:OPTIND+1:1}
 
+
 # only validate if this is the initial call of backup.sh
 if [[ -z "${BACKUP_INIT_CALL}" ]]; then
 
@@ -125,5 +126,15 @@ if [[ -z "${BACKUP_INIT_CALL}" ]]; then
     fi
 
 fi
+
+# counters for summary
+export errors=0
+export warnings=0
+export updated=0
+export copied=0
+export deleted=0
+export copied_size=0
+export deleted_size=0
+export BASE_SRC=$(dirname "$SRC") #for the summary
 
 backup_function "${SRC}" "${DST}" $c $b "${not_to_cp_filename}" $r "${regex}" ${first_run} "${not_to_cp_files[@]}"

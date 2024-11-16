@@ -25,14 +25,15 @@ cp_new_mod_files()
     local r=$6
     local regex="$7"
     local not_to_cp_files=("${@:8}")
+    local item
 
     for item in "${SRC}"/*;do
 
-        item=$(realpath -m "${item}")
+        item=$(realpath -m "${item}") || ((errors++))
         
         if [[ $b == 1 ]]; then
 
-            contains_element "${item}" "${not_to_cp_files[@]}"
+            contains_element "${item}" "${not_to_cp_files[@]}"|| ((errors++))
             
             if [[ $? == 0 ]]; then
             
@@ -44,7 +45,19 @@ cp_new_mod_files()
 
         if [[ -d "${item}" ]]; then
 
-            cp_dir "${item}" "${DST}" $c $b "${not_to_cp_filename}" $r "${regex}" "${not_to_cp_files[@]}"
+            cp_dir "${item}" "${SRC}" "${DST}" $c $b "${not_to_cp_filename}" $r "${regex}" "${not_to_cp_files[@]}" || ((errors++))
+
+            relative_path=${item#$BASE_SRC/}
+            # prints summary after finishing copying the directory & set all the counters to 0
+            echo "While backuping "${relative_path}": ${errors} Errors; ${warnings} Warnings; ${updated} Updated; ${copied} Copied (${copied_size}B); ${deleted} Deleted (${deleted_size}B)"
+            echo "" # prints an empty line
+            errors=0
+            warnings=0
+            updated=0
+            copied=0
+            copied_size=0
+            deleted=0
+            deleted_size=0
 
         elif [[ -f "${item}"  ]]; then
 
@@ -55,7 +68,7 @@ cp_new_mod_files()
 
             fi
 
-            cp_file "${item}" "${DST}" $c
+            cp_file "${item}" "${SRC}" "${DST}" $c || ((errors++))
                         
         fi
 

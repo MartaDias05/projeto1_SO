@@ -16,19 +16,23 @@ cp_dir()
 {
 
     local item=$1
-    local DST=$2
-    local c=$3
-    local b=$4
-    local not_to_cp_filename="$5"
-    local r=$6
-    local regex="$7"
-    local not_to_cp_files=("${@:8}")
+    local SRC=$2
+    local DST=$3
+    local c=$4
+    local b=$5
+    local not_to_cp_filename="$6"
+    local r=$7
+    local regex="$8"
+    local not_to_cp_files=("${@:9}")
 
     new_dst="${DST}/$(basename "${item}")"
 
+    # remove any files / directories in this directory that are not in src
+    remove_deleted_files "${new_dst}" "${item}" $c
+
     if [[ -d "${new_dst}" ]]; then # if directory exists then go into it and check its files
                     
-        cp_new_mod_files "${item}" "${new_dst}" $c $b "${not_to_cp_filename}" $r "${regex}" "${not_to_cp_files[@]}"
+        cp_new_mod_files "${item}" "${new_dst}" $c $b "${not_to_cp_filename}" $r "${regex}" "${not_to_cp_files[@]}" || ((errors++))
 
 
     else # if directory does not exist then create it and then go into it and check its files
@@ -37,11 +41,11 @@ cp_dir()
                     
         if [[ $c == 0 ]]; then
                     
-            mkdir "${new_dst}"
+            mkdir "${new_dst}" || ((errors++))
                     
         fi
 
-        cp_new_mod_files "${item}" "${new_dst}" $c $b "${not_to_cp_filename}" $r "${regex}" "${not_to_cp_files[@]}"
+        cp_new_mod_files "${item}" "${new_dst}" $c $b "${not_to_cp_filename}" $r "${regex}" "${not_to_cp_files[@]}"|| ((errors++))
 
     fi 
 

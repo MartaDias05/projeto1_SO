@@ -24,11 +24,11 @@ cp_all_files()
 
             if [[ $c == 0 ]]; then
 
-                mkdir "${new_dst}"
+                mkdir "${new_dst}" || ((errors++))
 
             fi
 
-            cp_all_files "${item}" "${new_dst}" $c
+            cp_all_files "${item}" "${new_dst}" $c || ((errors++))
 
         elif [[ -f "${item}" ]]; then
 
@@ -39,7 +39,9 @@ cp_all_files()
 
             if [[ ${c} == 0 ]]; then
 
-                cp -a ${pathname_original_file} ${pathname_copied_file}
+                cp -a ${pathname_original_file} ${pathname_copied_file} || ((errors++))
+                ((copied++))
+                copied_size=$(($(stat -c %s "${pathname_copied_file}") + $copied_size))
             
             fi
 

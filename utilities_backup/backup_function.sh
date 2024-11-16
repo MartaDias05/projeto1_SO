@@ -25,6 +25,8 @@ backup_function()
     local regex="$7"
     local first_run=$8
     local not_to_cp_files=("${@:9}")
+    local item
+
 
     if [[ ${first_run} == 1 ]]; then
 
@@ -35,7 +37,7 @@ backup_function()
             if [[ $b == 1 ]]; then
 
                 
-                contains_element "${item}" "${not_to_cp_files[@]}"
+                contains_element "${item}" "${not_to_cp_files[@]}" || ((errors++))
                 
                 if [[ $? == 0 ]]; then
 
@@ -52,11 +54,11 @@ backup_function()
 
                 if [[ $c == 0 ]]; then
 
-                    mkdir "${new_dst}"
+                    mkdir "${new_dst}" || ((errors++))
 
                 fi
 
-                backup_function "${item}" "${new_dst}" $c $b "${not_to_cp_filename}" $r "${regex}" $first_run "${not_to_cp_files[@]}"
+                backup_function "${item}" "${new_dst}" $c $b "${not_to_cp_filename}" $r "${regex}" $first_run "${not_to_cp_files[@]}" || ((errors++))
 
             elif [[ -f "${item}"  ]]; then
 
@@ -72,7 +74,10 @@ backup_function()
 
                 if [[ $c == 0 ]]; then
 
-                    cp -a "${item}" "${pathname_copied_file}"
+                    cp -a "${item}" "${pathname_copied_file}" || ((errors++))
+
+                    ((copied++))
+                    copied_size=$(($(stat -c %s "${pathname_copied_file}") + copied_size))
 
                 fi
 
@@ -82,9 +87,21 @@ backup_function()
 
     else
 
-        remove_deleted_files "${DST}" "${SRC}" $c
-        cp_new_mod_files "${SRC}" "${DST}" $c $b "${not_to_cp_filename}" $r "${regex}" "${not_to_cp_files[@]}"
+        remove_deleted_files "${DST}" "${SRC}" $c || ((errors++))
+        cp_new_mod_files "${SRC}" "${DST}" $c $b "${not_to_cp_filename}" $r "${regex}" "${not_to_cp_files[@]}" || ((errors++))
 
     fi
+
+    relative_path=${SRC#$BASE_SRC/}
+    # prints summary after finishing copying the directory & set all the counters to 0
+    echo "While backuping "${relative_path}": ${errors} Errors; ${warnings} Warnings; ${updated} Updated; ${copied} Copied (${copied_size}B); ${deleted} Deleted (${deleted_size}B)"
+    echo "" # prints an empty line
+    errors=0
+    warnings=0
+    updated=0
+    copied=0
+    copied_size=0
+    deleted=0
+    deleted_size=0
 
 }
