@@ -2,7 +2,6 @@
 
 . ./utilities_backup/remove_deleted_files.sh
 . ./utilities_backup/compare_modification_dates.sh
-. ./utilities_backup/cp_all_files.sh
 . ./utilities_backup/cp_new_mod_files.sh
 . ./utilities_backup/contains_element.sh
 . ./utilities_backup/cp_dir.sh
@@ -16,6 +15,15 @@ c=0
 r=0
 b=0
 first_run=0
+
+# counters for summary
+export errors=0
+export warnings=0
+export updated=0
+export copied=0
+export deleted=0
+export copied_size=0
+export deleted_size=0
 
 
 OPTSTRING=":cr:b:"
@@ -57,7 +65,7 @@ while getopts ${OPTSTRING} opt; do
             # read the file and add each not to copy file to the array
             while read -r LINE; do
                 # append files to not_to_cp_files;
-                not_to_cp_files+=($(realpath -m "${SRC}/${LINE}"))
+                not_to_cp_files+=("${LINE}")
             done < "${OPTARG}"
             ;;
         :)
@@ -77,6 +85,7 @@ done
 
 SRC=${@:OPTIND:1}
 DST=${@:OPTIND+1:1}
+export BASE_SRC="$SRC" #for the summary
 
 
 # only validate if this is the initial call of backup.sh
@@ -126,15 +135,5 @@ if [[ -z "${BACKUP_INIT_CALL}" ]]; then
     fi
 
 fi
-
-# counters for summary
-export errors=0
-export warnings=0
-export updated=0
-export copied=0
-export deleted=0
-export copied_size=0
-export deleted_size=0
-export BASE_SRC=$(dirname "$SRC") #for the summary
 
 backup_function "${SRC}" "${DST}" $c $b "${not_to_cp_filename}" $r "${regex}" ${first_run} "${not_to_cp_files[@]}"

@@ -32,12 +32,10 @@ backup_function()
 
         for item in "${SRC}"/*;do
 
-            item=$(realpath -m "${item}")
-
             if [[ $b == 1 ]]; then
 
                 
-                contains_element "${item}" "${not_to_cp_files[@]}" || ((errors++))
+                contains_element "${item}" "${not_to_cp_files[@]}"
                 
                 if [[ $? == 0 ]]; then
 
@@ -58,7 +56,7 @@ backup_function()
 
                 fi
 
-                backup_function "${item}" "${new_dst}" $c $b "${not_to_cp_filename}" $r "${regex}" $first_run "${not_to_cp_files[@]}" || ((errors++))
+                backup_function "${item}" "${new_dst}" $c $b "${not_to_cp_filename}" $r "${regex}" $first_run "${not_to_cp_files[@]}" 
 
             elif [[ -f "${item}"  ]]; then
 
@@ -85,23 +83,21 @@ backup_function()
 
         done
 
+        # prints summary after finishing copying the directory & set all the counters to 0
+        echo "While backuping "${SRC}": ${errors} Errors; ${warnings} Warnings; ${updated} Updated; ${copied} Copied (${copied_size}B); ${deleted} Deleted (${deleted_size}B)"
+        errors=0
+        warnings=0
+        updated=0
+        copied=0
+        copied_size=0
+        deleted=0
+        deleted_size=0
+
     else
 
-        remove_deleted_files "${DST}" "${SRC}" $c || ((errors++))
-        cp_new_mod_files "${SRC}" "${DST}" $c $b "${not_to_cp_filename}" $r "${regex}" "${not_to_cp_files[@]}" || ((errors++))
+        remove_deleted_files "${DST}" "${SRC}" $c 
+        cp_new_mod_files "${SRC}" "${DST}" $c $b "${not_to_cp_filename}" $r "${regex}" "${not_to_cp_files[@]}" 
 
     fi
-
-    relative_path=${SRC#$BASE_SRC/}
-    # prints summary after finishing copying the directory & set all the counters to 0
-    echo "While backuping "${relative_path}": ${errors} Errors; ${warnings} Warnings; ${updated} Updated; ${copied} Copied (${copied_size}B); ${deleted} Deleted (${deleted_size}B)"
-    echo "" # prints an empty line
-    errors=0
-    warnings=0
-    updated=0
-    copied=0
-    copied_size=0
-    deleted=0
-    deleted_size=0
 
 }

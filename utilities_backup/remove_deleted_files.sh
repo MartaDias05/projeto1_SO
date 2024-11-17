@@ -17,14 +17,12 @@ remove_deleted_files() {
     local c=$3
     local item
 
-    echo "DST -> $DST"
-
     for item in "${DST}"/*; do
 
         if [[ -d "${item}" ]]; then
 
             relative_path=${item#$DST/}
-            dir_name_in_src="${SRC}/${relative_path}" || ((errors++))
+            dir_name_in_src="${SRC}/${relative_path}"
 
             # check if directory appears in src
             if ! [[ -d "${dir_name_in_src}" ]]; then

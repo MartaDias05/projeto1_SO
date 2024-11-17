@@ -31,9 +31,6 @@ compare_modification_dates()
     
             cp -a "${src_file}" "${dst_file}"
 
-            ((copied++))
-            copied_size+=$(($(stat -c %s "${pathname_copied_file}") + $copied_size))
-
             ((updated++))
     
         fi

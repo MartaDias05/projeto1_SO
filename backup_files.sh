@@ -9,15 +9,6 @@
 checking=0
 first_run=0 # holds if it is the first time the script is running or not - to check if we need to copy the whole directory or just update the files
 
-warnings=0
-errors=0
-updated=0
-copied=0
-size_copied=0
-deleted=0
-size_deleted=0
-
-
 #initialize the option variables with the correct values having in consideration the flag passed in
 while getopts "c" opt; do
 
@@ -94,8 +85,6 @@ if (( ${checking} == 1 )); then
         remove_deleted_files "${DST}" "${SRC}" ${checking}
     fi
 
-    #echo "While backuping ${DST}: $errors Erros; $warnings Warnings; $updated Updated; $copied Copied ($size_copied); $deleted Deleted ($size_deleted)"
-
 else # if c was not passed in as a flag, do the actual backup
     
     if ((${first_run} == 1)); then
@@ -104,7 +93,7 @@ else # if c was not passed in as a flag, do the actual backup
         cp_new_mod_files "${SRC}" "${DST}" ${checking}
         remove_deleted_files "${DST}" "${SRC}" ${checking} 
     fi
-    #echo "While backuping ${DST}: $errors Erros; $warnings Warnings; $updated Updated; $copied Copied ($size_copied); $deleted Deleted ($size_deleted)"
+
 fi
 
 

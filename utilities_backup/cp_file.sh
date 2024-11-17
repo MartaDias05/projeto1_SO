@@ -15,12 +15,12 @@ cp_file()
     local DST="$3"
     local c="$4"
 
-    pathname_copied_file="${DST}/$(basename "${item}")" || ((errors++))
+    pathname_copied_file="${DST}/$(basename "${item}")" 
     
     # verify if the files exists on DST
     if [[ -f "${pathname_copied_file}" ]]; then
 
-        compare_modification_dates "${item}" "${pathname_copied_file}" "${c}" || ((errors++))
+        compare_modification_dates "${item}" "${pathname_copied_file}" "${c}"
     
     else
     

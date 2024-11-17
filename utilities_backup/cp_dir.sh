@@ -32,7 +32,7 @@ cp_dir()
 
     if [[ -d "${new_dst}" ]]; then # if directory exists then go into it and check its files
                     
-        cp_new_mod_files "${item}" "${new_dst}" $c $b "${not_to_cp_filename}" $r "${regex}" "${not_to_cp_files[@]}" || ((errors++))
+        cp_new_mod_files "${item}" "${new_dst}" $c $b "${not_to_cp_filename}" $r "${regex}" "${not_to_cp_files[@]}" 
 
 
     else # if directory does not exist then create it and then go into it and check its files
@@ -45,7 +45,7 @@ cp_dir()
                     
         fi
 
-        cp_new_mod_files "${item}" "${new_dst}" $c $b "${not_to_cp_filename}" $r "${regex}" "${not_to_cp_files[@]}"|| ((errors++))
+        cp_new_mod_files "${item}" "${new_dst}" $c $b "${not_to_cp_filename}" $r "${regex}" "${not_to_cp_files[@]}"
 
     fi 
 
