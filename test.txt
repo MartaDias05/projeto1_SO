@@ -7,3 +7,6 @@ a mathildis é chata
 
 
 problema: estive para ai 30 min e nao consigo perceber o erro do -r, eu quando uso -r ele copia todos os ficheiros, acho que o regex nao esta a funcionar
+
+
+
