@@ -19,12 +19,19 @@ compare_modification_dates()
     dst_file_time=$(stat -c %Y "$dst_file")
 
     if [[ "$dst_file_time" -gt "$src_file_time" ]]; then
-        #warnings=$(($warnings + 1))
-        echo "warning should come up here"
+
+        echo "WARNING: backup entry "${dst_file}" is newer than "${src_file}"; Should not happen"
+
     elif [[ "$dst_file_time" -lt "$src_file_time" ]]; then
+
         echo "cp -a "${src_file}" "${dst_file}""
+
         if [[ $c == 0 ]]; then
+
             cp -a "${src_file}" "${dst_file}"
+
         fi
+
     fi
+
 }

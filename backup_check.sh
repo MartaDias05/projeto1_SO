@@ -1,111 +1,110 @@
-# !/bin/bash
+#!/bin/bash
 
-SRC=${@:OPTIND:1}
-DST=${@:OPTIND+1:1}
-
-
-#check if only 2 positional arguments were passed in
-if [[ $(($# - OPTIND+1)) -ne 2 ]]; then
-    echo "The program accepts 2 and only 2 positional arguments"
-    exit 1
-fi
-
-#check if SRC and DST are valid paths
-if ! [[ -d ${SRC} ]]; then
-
-    echo "The path '${SRC}' is not a valid directory path."
+# Check if exactly 2 positional arguments were passed in
+if [[ $# -ne 2 ]]; then
+   
+    echo "The program accepts exactly 2 positional arguments: SRC and DST"
     exit 1
 
 fi
 
-parent_dir=$(dirname "${DST}") # parent dir holds the path to the directory passed in a dst
+SRC=$1
+DST=$2
 
-if ! [[ -d ${parent_dir} ]]; then
+# Check if SRC is a valid directory
+if ! [[ -d "${SRC}" ]]; then
 
-    echo "The directory passed in for the destination of the backup is not valid!"
+    echo "The path '${SRC}' is not a valid directory."
     exit 1
 
 fi
 
+# Check if the parent directory of DST exists
+parent_dir=$(dirname "${DST}")
+if ! [[ -d "${parent_dir}" ]]; then
 
+    echo "The directory for the destination path '${DST}' is not valid."
+    exit 1
 
-# function to compare files between the two directories
-compare_files() {
-    local SRC=$1
-    local DST=$2
-    local item
+fi
 
+# array that hold differing files
+declare -a diff_files
 
-    # iterate through SRC 
-    for item in "${SRC}"/*; do
+# this function checks if a given file belongs to diff_files
+contains_elem() {
 
-        # checks if the item is a directory
-        if [[ -d "${item}" ]]; then
-            
-            relative_path=${item#$SRC/}
-            new_dst="${DST}/${relative_path}"
+    local match=$1
 
-            # checks if the directory exits in DST
-            if ! [[ -d "${new_dst}" ]]; then
-                echo "${item} ${new_dst} differ"
-                
-            fi
+    for file in "${diff_files[@]}"; do
 
-            compare_files "${item}" "${new_dst}"
+        if [[ "$file" == "$match" ]]; then
 
+            return 0 # found it in array
 
-        elif [[ -f "${item}" ]]; then
-
-            relative_path=${item#SRC/}
-            pathname_dst_file="${DST}/${relative_path}"
-
-
-            # checks if the file exist in DST
-            if ! [[ -f "${pathname_dst_file}" ]]; then
-                echo "${item} ${pathname_dst_file} differ"
-                
-
-            else
-                scr_check=$(md5sum "${item}" | cut -d " " -f1)
-                dst_check=$(md5sum "${pathname_dst_file}" | cut -d " " -f1)
-
-                # checks if they differ
-                if [[ "${scr_check}" != "${dst_check}" ]]; then
-                    echo "${scr_check} ${dst_check} differ"
-                fi
-            fi
         fi
+
     done
 
-    # iterate through DST and checks if they exist in SRC
-    for item in "${DST}"/*; do
+    return 1 # did not find it in array
+}
 
-        if [[ -d "${item}" ]]; then
+# this function checks if a fiven file already belongs to diff_files; if not -> adds file to it
+add() {
+
+    local file=$1
+
+    if ! contains_elem "$file" ; then
+
+        diff_files+=("$file")
+
+    fi
+
+}
+
+# this function is responsible for comparing the files in a given SRC directory to another given DST directory
+compare_dirs() {
+
+    local src_dir=$1
+    local dst_dir=$2
+
+
+    for src_item in "${src_dir}"/*; do
+        
+        dst_item="${dst_dir}/$(basename "${src_item}")"
+
+        if [[ -d "${src_item}" ]]; then
             
-            relative_path=${item#$DST/}
-            pathname_src_dir="${SRC}/${relative_path}"
+            if  [[ -d "${dst_item}" ]]; then
 
-            # checks if the directory exits in SRC
-            if ![[ -d "${pathname_src_dir}" ]]; then
-                echo "${item} ${new_dst} differ"
-                
+                compare_dirs "${src_item}" "${dst_item}" 
+
+            
             fi
+        
+        elif [[ -f "${src_item}" ]]; then
+        
+            if  [[ -f "${dst_item}" ]]; then
 
-        elif [[ -f "${item}" ]]; then
+                src_checksum=$(md5sum "${src_item}" | cut -d ' ' -f1)
+                dst_checksum=$(md5sum "${dst_item}" | cut -d ' ' -f1)
 
-            relative_path=${item#DST/}
-            pathname_src_file="${SRC}/${relative_path}"
-
-
-            # checks if the file exist in SRC   
-            if ! [[ -f "{pathname_src_file}" ]]; then
-                echo "${item} ${pathname_src_file} differ"
+                if [[ "${src_checksum}" != "${dst_checksum}" ]]; then
                 
+                    add "${src_item} and ${dst_item} differ."
+                
+                fi
+            
             fi
+        
         fi
+    
     done
 }
 
 
+compare_dirs "${SRC}" "${DST}"
 
-
+for item in "${diff_files[@]}"; do
+    echo "$item"
+done
