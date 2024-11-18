@@ -30,15 +30,16 @@ remove_deleted_files() {
                 # if not -> delete;
                 echo "rm -r ${item}"
 
-                if [[ $c == 0 ]]; then
+                n_files=$(find "${item}" -type f | wc -l)
+                ((deleted += n_files))
+                deleted_size=$((deleted_size + $(du -sb "${item}" | cut -f1)))
 
-                    n_files=$(find "${item}" -type f | wc -l)
-                    ((deleted += n_files))
-                    deleted_size=$((deleted_size + $(du -sb "${item}" | cut -f1)))
+                if [[ $c == 0 ]]; then
 
                     rm -r "${item}" || ((errors++))
 
                 fi
+
             fi
 
         elif [[ -f "${item}" ]]; then
@@ -50,10 +51,10 @@ remove_deleted_files() {
                
                 echo "rm ${DST}/$(basename "${item}")"
 
-                if [[ ${c} == 0 ]]; then
+                ((deleted++))
+                deleted_size=$((deleted_size + $(stat -c %s "${item}")))
 
-                    ((deleted++))
-                    deleted_size=$((deleted_size + $(stat -c %s "${item}")))
+                if [[ ${c} == 0 ]]; then
 
                     rm "${DST}/$(basename "${item}")" || ((errors++))
                 

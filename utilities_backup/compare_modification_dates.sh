@@ -30,10 +30,10 @@ compare_modification_dates()
         if [[ $c == 0 ]]; then
     
             cp -a "${src_file}" "${dst_file}"
-
-            ((updated++))
     
         fi
+
+        ((updated++))
     
     fi
 }

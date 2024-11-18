@@ -74,10 +74,10 @@ backup_function()
 
                     cp -a "${item}" "${pathname_copied_file}" || ((errors++))
 
-                    ((copied++))
-                    copied_size=$(($(stat -c %s "${pathname_copied_file}") + copied_size))
-
                 fi
+
+                ((copied++))
+                copied_size=$(($(stat -c %s "${item}") + copied_size))
 
             fi
 
