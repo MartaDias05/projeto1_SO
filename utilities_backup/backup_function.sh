@@ -30,35 +30,22 @@ backup_function()
 
     if [[ ${first_run} == 1 ]]; then
 
-        for item in "${SRC}"/*;do
+        # cp the files first;
+        for item in "${SRC}"/* "${SRC}"/.*; do
 
-            if [[ $b == 1 ]]; then
+            if [[ -f "${item}" ]]; then
 
-                
-                contains_element "${item}" "${not_to_cp_files[@]}"
-                
-                if [[ $? == 0 ]]; then
+                if [[ $b == 1 ]]; then
 
-                    continue
-                
+                    contains_element "${item}" "${not_to_cp_files[@]}"
+                    
+                    if [[ $? == 0 ]]; then
+                    
+                        continue
+                    
+                    fi
+                    
                 fi
-                
-            fi
-
-            if [[ -d "${item}" ]]; then
-                            
-                new_dst="${DST}/$(basename "${item}")"
-                echo "mkdir "${new_dst}""
-
-                if [[ $c == 0 ]]; then
-
-                    mkdir "${new_dst}" || ((errors++))
-
-                fi
-
-                backup_function "${item}" "${new_dst}" $c $b "${not_to_cp_filename}" $r "${regex}" $first_run "${not_to_cp_files[@]}" 
-
-            elif [[ -f "${item}"  ]]; then
 
                 pathname_copied_file="${DST}/$(basename "${item}")"
 
@@ -78,12 +65,17 @@ backup_function()
 
                 ((copied++))
                 copied_size=$(($(stat -c %s "${item}") + copied_size))
+                            
+            else
+
+                continue
 
             fi
 
+
         done
 
-        # prints summary after finishing copying the directory & set all the counters to 0
+        # then print summary for the current SRC directory
         echo "While backuping "${SRC}": ${errors} Errors; ${warnings} Warnings; ${updated} Updated; ${copied} Copied (${copied_size}B); ${deleted} Deleted (${deleted_size}B)"
         errors=0
         warnings=0
@@ -92,6 +84,49 @@ backup_function()
         copied_size=0
         deleted=0
         deleted_size=0
+
+        # finaly, deal with sub-directories
+        for item in "${SRC}"/* "${SRC}"/.*; do
+    
+            [[ "$(basename "${item}")" == "." || "$(basename "${item}")" == ".." ]] && continue
+
+
+            if [[ $b == 1 ]]; then
+
+                contains_element "${item}" "${not_to_cp_files[@]}"
+                
+                if [[ $? == 0 ]]; then
+                
+                    continue
+                
+                fi
+                
+            fi
+
+            if [[ -d "${item}" ]]; then
+
+                # checks for special . and .. directories and ignores them
+                [[ "$(basename "${item}")" == "." || "$(basename "${item}")" == ".." ]] && continue
+
+                new_dst="${DST}/$(basename "${item}")"
+                echo "mkdir "${new_dst}""
+
+                if [[ $c == 0 ]]; then
+
+                    mkdir "${new_dst}" || ((errors++))
+
+                fi
+
+                backup_function "${item}" "${new_dst}" $c $b "${not_to_cp_filename}" $r "${regex}" $first_run "${not_to_cp_files[@]}" 
+
+                            
+            else
+
+                continue
+
+            fi
+
+        done
 
     else
 

@@ -17,7 +17,10 @@ remove_deleted_files() {
     local c=$3
     local item
 
-    for item in "${DST}"/*; do
+    for item in "${DST}"/* "${DST}"/.*; do
+    
+        [[ "$(basename "${item}")" == "." || "$(basename "${item}")" == ".." ]] && continue
+
 
         if [[ -d "${item}" ]]; then
 

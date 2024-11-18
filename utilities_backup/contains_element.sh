@@ -18,7 +18,7 @@ contains_element()
     local not_to_cp_files=("$@")
     local element
 
-    match=$(realpath -m "${match}") 
+    match=$(realpath -m ${match}) 
 
     for element in "${not_to_cp_files[@]}"; do # for each element in the array
 

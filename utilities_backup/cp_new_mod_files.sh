@@ -29,7 +29,8 @@ cp_new_mod_files()
 
     # cp the files first;
 
-    for item in "${SRC}"/*;do
+    for item in "${SRC}"/* "${SRC}"/.*; do
+
 
         if [[ -f "${item}" ]]; then
 
@@ -73,7 +74,10 @@ cp_new_mod_files()
     deleted_size=0
 
     # finaly, deal with sub-directories
-    for item in "${SRC}"/*;do
+    for item in "${SRC}"/* "${SRC}"/.*; do
+    
+        [[ "$(basename "${item}")" == "." || "$(basename "${item}")" == ".." ]] && continue
+
 
         if [[ $b == 1 ]]; then
 
